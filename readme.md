@@ -54,7 +54,7 @@ This project demonstrates backend API development, authentication, and frontend 
 ##  Login Credentials
 
 Note:
-after Databse Confrigration in setting.py use this for create crefentials 
+after Databse Confrigration in settings.py use this for create Credentials 
 ---
 
 ##  Create Manager Account
