@@ -54,13 +54,10 @@ This project demonstrates backend API development, authentication, and frontend 
 ##  Login Credentials
 
 Note:
-after Confrigration of setting 
-use this for create crefentials 
-
-
+after Databse Confrigration in setting.py use this for create crefentials 
 ---
 
-## 👨‍💼 Create Manager Account
+##  Create Manager Account
 
 Run the following code inside the Django shell:
 
@@ -76,8 +73,7 @@ manager_group, created = Group.objects.get_or_create(name='manager')
 manager.groups.add(manager_group)
 manager.save()
 
-
-For Create Normal User
+##  Create Manager Normal User Account
 
 from django.contrib.auth.models import User
 
@@ -101,30 +97,6 @@ Username: user2
 Password: 123  
 
 ---
-
-## 🔄 System Workflow
-
-1. User logs in.
-2. User submits a leave request.
-3. Leave request status is set to Pending.
-4. Manager logs in.
-5. Manager reviews the leave request.
-6. Manager approves or rejects the request with remarks.
-7. User can view the updated leave status.
-
----
-
-## 📡 Sample API Endpoints
-
-POST   /login/  
-POST   /add_leaveset/  
-GET    /add_leaveset/  
-PATCH  /modify_leave/<id>/  
-
----
-
-## 🎯 Purpose of the Project
-
 This project was created to practice and understand:
 
 - Django REST Framework
