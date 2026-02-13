@@ -97,11 +97,4 @@ Username: user2
 Password: 123  
 
 ---
-This project was created to practice and understand:
 
-- Django REST Framework
-- Authentication & Authorization
-- Role-Based Access Control
-- CRUD Operations
-- Frontend & Backend Integration
-- Working with APIs using Fetch
