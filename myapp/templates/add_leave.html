@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% block start %}
+
+<style>
+    /* Wrapper - Perfect Center */
+    .leave-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 60px);
+        /* adjust if navbar height exists */
+        padding-left: 300px;
+    }
+
+
+    /* Card Container */
+    .leave-container {
+        background: #ffffff;
+        padding: 40px;
+        width: 750px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Heading */
+    .leave-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    /* Form Fields */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 15px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #4f46e5;
+    }
+
+    /* Button */
+    .btn {
+        width: 100%;
+        padding: 14px;
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .btn:hover {
+        background: #4338ca;
+    }
+
+    /* Table */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 30px;
+    }
+
+    table th,
+    table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+    }
+
+    table th {
+        background: #4f46e5;
+        color: white;
+    }
+
+    /* Status Colors */
+    .status-pending {
+        color: orange;
+        font-weight: bold;
+    }
+
+    .status-approved {
+        color: green;
+        font-weight: bold;
+    }
+
+    .status-rejected {
+        color: red;
+        font-weight: bold;
+    }
+</style>
+
+<div class="leave-wrapper">
+    <div class="leave-container">
+
+        <h2>Apply for Leave</h2>
+
+        <form id="leaveForm">
+            <div class="form-group">
+                <select id="leave_type" required>
+                    <option value="">Select Leave Type</option>
+                    <option value="sick">Sick Leave</option>
+                    <option value="casual">Casual Leave</option>
+                    <option value="annual">Annual Leave</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <input type="date" id="from_date" required>
+            </div>
+
+            <div class="form-group">
+                <input type="date" id="to_date" required>
+            </div>
+
+            <div class="form-group">
+                <textarea id="reason" placeholder="Enter reason..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn">Submit Leave</button>
+        </form>
+
+        <h3 style="margin-top:40px; text-align:center;">My Leave Requests</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Start Date</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Remark</th>
+                </tr>
+            </thead>
+            <tbody id="leaveTableBody"></tbody>
+        </table>
+
+    </div>
+</div>
+<script>
+const access = localStorage.getItem("access");
+const refresh = localStorage.getItem("refresh");
+
+// Helper function to refresh access token
+async function refreshAccessToken() {
+    try {
+        const res = await fetch("http://127.0.0.1:8000/token/refresh/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!res.ok) {
+            throw new Error("Refresh token expired");
+        }
+
+        const data = await res.json();
+        localStorage.setItem("access", data.access);
+        return data.access;
+
+    } catch (error) {
+        console.log("Refresh token expired or invalid:", error);
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        window.location.href = "http://127.0.0.1:8000/"; // Redirect to login
+        return null;
+    }
+}
+
+// Wrapper for fetch with auto token refresh
+async function authFetch(url, options = {}) {
+    let token = localStorage.getItem("access");
+    options.headers = options.headers || {};
+    options.headers["Authorization"] = "Bearer " + token;
+
+    let res = await fetch(url, options);
+
+    // If access token expired, refresh it
+    if (res.status === 401) {
+        token = await refreshAccessToken();
+        if (!token) return null; // Already redirected to login
+
+        // Retry the original request with new token
+        options.headers["Authorization"] = "Bearer " + token;
+        res = await fetch(url, options);
+    }
+
+    return res;
+}
+
+// Load Leave List
+async function loadLeaves() {
+    try {
+        const res = await authFetch("http://127.0.0.1:8000/add_leaveset/");
+        if (!res || !res.ok) {
+            console.log("Failed to fetch leaves");
+            return;
+        }
+
+        const data = await res.json();
+        const tbody = document.getElementById("leaveTableBody");
+        tbody.innerHTML = "";
+
+        data.forEach(leave => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${leave.leave_type}</td>
+                    <td>${leave.start_data}</td>
+                    <td class="status-${leave.status}">${leave.status}</td>
+                    <td>${leave.reason}</td>
+                    <td>${leave.remark}</td>
+                </tr>
+            `;
+        });
+
+    } catch (error) {
+        console.log("Error:", error);
+    }
+}
+
+// Submit Leave Form
+document.getElementById("leaveForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const leaveData = {
+        leave_type: document.getElementById("leave_type").value,
+        start_data: document.getElementById("from_date").value,
+        end_date: document.getElementById("to_date").value,
+        reason: document.getElementById("reason").value,
+        remark: "None"
+    };
+
+    try {
+        const res = await authFetch("http://127.0.0.1:8000/add_leaveset/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(leaveData)
+        });
+
+        if (!res) return;
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert("Leave Applied Successfully");
+            document.getElementById("leaveForm").reset();
+            loadLeaves();
+        } else {
+            if (data.end_date) alert(data.end_date[0]);
+        }
+
+    } catch (error) {
+        console.log("Error:", error);
+    }
+});
+
+loadLeaves();
+</script>
+
+
+{% endblock %}

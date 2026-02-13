@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% block start %}
+
+<style>
+    /* Wrapper - Perfect Center */
+    .leave-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 60px);
+        padding-left: 300px;
+    }
+
+    /* Card Container */
+    .leave-container {
+        background: #ffffff;
+        padding: 40px;
+        width: 750px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Heading */
+    .leave-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    /* Table */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    table th,
+    table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+    }
+
+    table th {
+        background: #4f46e5;
+        color: white;
+    }
+
+    /* Status Colors */
+    .status-pending {
+        color: orange;
+        font-weight: bold;
+    }
+
+    .status-approved {
+        color: green;
+        font-weight: bold;
+    }
+
+    .status-rejected {
+        color: red;
+        font-weight: bold;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background: #fff;
+        padding: 25px;
+        width: 400px;
+        border-radius: 10px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .close-btn {
+        float: right;
+        cursor: pointer;
+        font-size: 22px;
+    }
+
+    .modal-buttons {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .accept-btn {
+        background: green;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .reject-btn {
+        background: red;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        cursor: pointer;
+    }
+</style>
+
+<div class="leave-wrapper">
+    <div class="leave-container">
+
+        <h2>My Leave Requests</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Employee Name</th>
+                    <th>Type</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                </tr>
+            </thead>
+            <tbody id="leaveTableBody"></tbody>
+        </table>
+
+    </div>
+</div>
+<!-- Status Update Modal -->
+<div id="statusModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h3>Update Leave Status</h3>
+
+        <p id="modalLeaveInfo"></p>
+
+        <!-- Remark Input -->
+        <label for="remarkInput">Remark:</label>
+        <input type="text" id="remarkInput" placeholder="Enter remark">
+
+        <div class="modal-buttons">
+            <button class="accept-btn" onclick="updateStatus('approved')">Accept</button>
+            <button class="reject-btn" onclick="updateStatus('rejected')">Reject</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const access = localStorage.getItem("access");
+    const refresh = localStorage.getItem("refresh");
+
+    // Helper function to refresh access token
+    async function refreshAccessToken() {
+        try {
+            const res = await fetch("http://127.0.0.1:8000/api/refresh/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh })
+            });
+
+            if (!res.ok) throw new Error("Refresh token expired");
+
+            const data = await res.json();
+            localStorage.setItem("access", data.access);
+            return data.access;
+
+        } catch (error) {
+            console.log("Refresh token expired or invalid:", error);
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            window.location.href = "http://127.0.0.1:8000/"; // redirect to login
+            return null;
+        }
+    }
+
+    // Wrapper fetch function with auto token refresh
+    async function authFetch(url, options = {}) {
+        let token = localStorage.getItem("access");
+        options.headers = options.headers || {};
+        options.headers["Authorization"] = "Bearer " + token;
+
+        let res = await fetch(url, options);
+
+        // Retry if access token expired
+        if (res.status === 401) {
+            token = await refreshAccessToken();
+            if (!token) return null; // already redirected
+
+            options.headers["Authorization"] = "Bearer " + token;
+            res = await fetch(url, options);
+        }
+
+        return res;
+    }
+
+    // Load Leave List
+    async function loadLeaves() {
+        try {
+            const res = await authFetch("http://127.0.0.1:8000/add_leaveset/");
+            if (!res || !res.ok) {
+                console.log("Failed to fetch leaves");
+                return;
+            }
+
+            const data = await res.json();
+            const tbody = document.getElementById("leaveTableBody");
+            tbody.innerHTML = "";
+
+            data.forEach(leave => {
+                tbody.innerHTML += `
+                <tr>
+                    <td>${leave.username}</td>
+                    <td>${leave.leave_type}</td>
+                    <td>${leave.start_data}</td>
+                    <td>${leave.end_date}</td>
+                    <td>
+                        <span 
+                            class="status-${leave.status}" 
+                            style="cursor:${leave.status === 'pending' ? 'pointer' : 'default'}; 
+                                    color:${leave.status === 'pending' ? 'blue' : 'black'};"
+                            ${leave.status === 'pending' ?
+                        `onclick="openModal(${leave.id}, '${leave.leave_type}')"` : ''}
+                            >
+                            ${leave.status}
+                            </span>
+                    </td>
+                    <td>${leave.reason}</td>
+                </tr>
+            `;
+            });
+
+        } catch (error) {
+            console.log("Error:", error);
+        }
+    }
+
+    // Load data when page loads
+    loadLeaves();
+</script>
+
+<script>
+    let selectedLeaveId = null;
+
+    function openModal(id, type) {
+        selectedLeaveId = id;
+        document.getElementById("modalLeaveInfo").innerText =
+            "Leave Type: " + type;
+        document.getElementById("statusModal").style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById("statusModal").style.display = "none";
+    }
+
+    async function updateStatus(newStatus) {
+        if (!selectedLeaveId) return;
+
+        // Get the remark value
+        const remark = document.getElementById("remarkInput").value;
+
+        try {
+            const res = await fetch(
+                `http://127.0.0.1:8000/modify_leave/${selectedLeaveId}/`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + access
+                    },
+                    body: JSON.stringify({
+                        status: newStatus,
+                        remark: remark   // include remark
+                    })
+                }
+            );
+
+            if (res.ok) {
+                alert("Leave status updated successfully!");
+                closeModal();
+                loadLeaves(); // reload leave list if needed
+            } else {
+                alert("Failed to update leave status.");
+            }
+        } catch (error) {
+            console.error("Error updating status:", error);
+        }
+    }
+
+</script>
+
+{% endblock %}

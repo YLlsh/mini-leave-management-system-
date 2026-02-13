@@ -1,0 +1,135 @@
+
+#  Mini Leave Management System
+
+##  Project Overview
+
+The Mini Leave Management System is a simple web-based application built using Python Django REST Framework (DRF).
+
+It allows users to apply for leave and managers to review, approve, or reject leave requests.
+
+This project demonstrates backend API development, authentication, and frontend integration using JavaScript.
+
+---
+
+##  Features
+
+### User Features
+- Login securely
+- Apply for leave
+- Select leave type (Sick, Casual, Annual)
+- Choose start and end date
+- Provide reason for leave
+- View leave status (Pending / Approved / Rejected)
+
+###  Manager Features
+- Login securely
+- View all leave requests
+- Approve leave requests
+- Reject leave requests
+- Add remarks while updating leave status
+
+---
+
+##  Technologies Used
+
+### Backend
+- Python
+- Django
+- Django REST Framework (DRF)
+
+### Frontend( used AI tools to design and structure the UI )
+- HTML
+- CSS
+- JavaScript (Fetch API)
+
+
+### Database
+- PostgreSQL
+
+### Authentication
+- JWT Token-Based Authentication
+
+---
+
+##  Login Credentials
+
+Note:
+after Confrigration of setting 
+use this for create crefentials 
+
+
+---
+
+## 👨‍💼 Create Manager Account
+
+Run the following code inside the Django shell:
+
+```python
+from django.contrib.auth.models import User, Group
+
+manager = User(username='manager')
+manager.set_password('m123')   
+manager.save()
+
+manager_group, created = Group.objects.get_or_create(name='manager')
+
+manager.groups.add(manager_group)
+manager.save()
+
+
+For Create Normal User
+
+from django.contrib.auth.models import User
+
+user1 = User(username='user1')
+user1.set_password('123')
+user1.save()
+
+user2 = User(username='user2')
+user2.set_password('123')
+user2.save()
+
+
+Username: manager  
+Password: m123  
+
+
+Username: user1  
+Password: 123  
+
+Username: user2  
+Password: 123  
+
+---
+
+## 🔄 System Workflow
+
+1. User logs in.
+2. User submits a leave request.
+3. Leave request status is set to Pending.
+4. Manager logs in.
+5. Manager reviews the leave request.
+6. Manager approves or rejects the request with remarks.
+7. User can view the updated leave status.
+
+---
+
+## 📡 Sample API Endpoints
+
+POST   /login/  
+POST   /add_leaveset/  
+GET    /add_leaveset/  
+PATCH  /modify_leave/<id>/  
+
+---
+
+## 🎯 Purpose of the Project
+
+This project was created to practice and understand:
+
+- Django REST Framework
+- Authentication & Authorization
+- Role-Based Access Control
+- CRUD Operations
+- Frontend & Backend Integration
+- Working with APIs using Fetch
