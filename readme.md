@@ -54,7 +54,7 @@ This project demonstrates backend API development, authentication, and frontend 
 ##  Login Credentials
 
 Note:
-after Databse Confrigration in setting.py use this for create crefentials 
+after Databse Confrigration in settings.py use this for create Credentials 
 ---
 
 ##  Create Manager Account
@@ -97,11 +97,4 @@ Username: user2
 Password: 123  
 
 ---
-This project was created to practice and understand:
 
-- Django REST Framework
-- Authentication & Authorization
-- Role-Based Access Control
-- CRUD Operations
-- Frontend & Backend Integration
-- Working with APIs using Fetch
