@@ -14,3 +14,19 @@ class leave_requests(models.Model):
 
     def __str__(self):
         return f"{self.user_id}"
+
+class Employee(models.Model):
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    emp_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=200, default=None)
+    age = models.IntegerField(default=None)
+    position = models.CharField(max_length=100, default=None)
+    salary = models.IntegerField(default=None)
+    join_date = models.DateField(auto_now_add=True)
+    terminate_date = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    create_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.name}'

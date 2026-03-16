@@ -25,6 +25,7 @@ from rest_framework.routers import DefaultRouter
 router  = DefaultRouter()
 router.register(r"add_leaveset",add_leave_viewset, basename="add_leaveset")
 router.register(r"modify_leave",modify_leave_status, basename="modify_leave")
+router.register(r'employee',EmployeeView, basename='employee')
 
 
 urlpatterns = [
@@ -33,6 +34,10 @@ urlpatterns = [
     path("home/", TemplateView.as_view(template_name="home.html"),name="home"),
     path("add_leave/", TemplateView.as_view(template_name="add_leave.html"), name="add_leave"),
     path("leave_list/", TemplateView.as_view(template_name="leave_list.html"), name="leave_list"),
+    path("employe_list/", TemplateView.as_view(template_name="employe_list.html"), name="employe_list"),
+    path("add_employee/", TemplateView.as_view(template_name="add_employee.html"), name="add_employee"),
+    path("edit_employee/",edit_employee, name="edit_employee"),
+    path("get_emp_id/<int:id>/",get_emp_id, name="get_emp_id"),
     # path("api/add_leave/", add_leave, name="add_leave_api"),
     path("api/token/", CustomeLoginView.as_view()),
     path("api/refresh/", TokenRefreshView.as_view()),

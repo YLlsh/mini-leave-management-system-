@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
-from .models import leave_requests
+from .models import *
 
 class CustomeSerializer(TokenObtainPairSerializer):
 
@@ -39,3 +39,16 @@ class LeaveSerializer(serializers.ModelSerializer):
                 )
 
         return data
+
+
+class EmployeeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model  = Employee
+        fields = ['user','emp_id','name','age','position','salary','join_date','terminate_date','is_active']
+
+        read_only_fields = ['user','emp_id','terminate_date','is_active','create_at']
+
+
+
+
